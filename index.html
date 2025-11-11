@@ -1,154 +1,38 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html>
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Puzzle Solving Cipher Decoder (Caesar & Atbash)</title>
+<meta charset="UTF-8">
+<title>Caesar + Atbash Cipher Decoder</title>
 <style>
-  :root { --bg:#0f1220; --panel:#151a2e; --ink:#eaf2ff; --muted:#9fb2cc; --accent:#4dd0e1; }
-  *{box-sizing:border-box} body{margin:0;font-family:system-ui,Segoe UI,Roboto,Arial;color:var(--ink);background:linear-gradient(180deg,var(--bg),#0b1220)}
-  .wrap{max-width:900px;margin:24px auto;padding:0 16px}
-  h1{margin:8px 0 14px;font-size:28px}
-  .card{background:var(--panel);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:16px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
-  textarea{width:100%;height:120px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:#0d1326;color:var(--ink);padding:12px;font-size:16px;resize:vertical}
-  .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-  button{border:0;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer;background:var(--accent);color:#00141b}
-  button.secondary{background:transparent;border:1px solid rgba(255,255,255,.18);color:var(--ink)}
-  .muted{color:var(--muted);font-size:13px;margin:6px 0 0}
-  .out{white-space:pre-wrap;background:#0d1326;border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:12px;margin-top:12px;min-height:56px}
-  details{margin-top:10px}
-  summary{cursor:pointer;color:var(--muted)}
-  .tag{display:inline-block;background:#0c1a24;border:1px solid rgba(255,255,255,.1);padding:4px 8px;border-radius:999px;font-size:12px;margin-right:6px}
+  body { font-family: Arial, sans-serif; background:#111; color:white; padding:40px; }
+  h1 { color:#4dd0e1; margin-bottom: 10px; }
+  textarea { width:100%; height:120px; padding:12px; font-size:16px; border-radius:8px; border:1px solid #444; background:#1a1a1a; color:white; }
+  button { margin-top:12px; padding:10px 16px; border:none; border-radius:8px; cursor:pointer; font-size:16px; }
+  .decodeBtn { background:#4dd0e1; color:black; font-weight:bold; }
+  .exampleBtn { background:#222; border:1px solid #555; color:white; }
+  .output { margin-top:20px; padding:15px; background:#1a1a1a; border-radius:8px; border:1px solid #333; white-space:pre-wrap; }
+  .sectionTitle { margin-top:25px; font-size:17px; font-weight:bold; color:#4dd0e1; }
 </style>
 </head>
+
 <body>
-  <div class="wrap">
-    <h1>🔐 Puzzle Solving Cipher Decoder</h1>
-    <p class="muted">Paste a cipher text and click <b>Decode</b>. The app will automatically detect <b>Caesar</b> (best shift) or <b>Atbash</b> and show the result.</p>
 
-    <div class="card" id="app">
-      <textarea id="input" placeholder="Type or paste cipher text here… e.g., KHOOR or SVOOL"></textarea>
-      <div class="row">
-        <button id="btnDecode">Decode</button>
-        <button class="secondary" id="btnClear">Clear</button>
-        <button class="secondary" id="exCaesar">Example: Caesar (KHOOR)</button>
-        <button class="secondary" id="exAtbash">Example: Atbash (SVOOL)</button>
-      </div>
+<h1>🔐 Simple Cipher Decoder</h1>
+<p>Automatically detects and decodes <b>Caesar</b> (any shift 0–25) or <b>Atbash</b>.</p>
 
-      <p class="muted" id="meta"></p>
-      <div class="out" id="output">Decoded message will appear here.</div>
+<textarea id="inputText" placeholder="Enter cipher text (e.g., KHOOR or SVOOL)..."></textarea>
+<br>
+<button class="decodeBtn" onclick="decode()">Decode</button>
+<button class="exampleBtn" onclick="setExample('KHOOR')">Example Caesar (KHOOR → HELLO)</button>
+<button class="exampleBtn" onclick="setExample('SVOOL')">Example Atbash (SVOOL → HELLO)</button>
 
-      <details id="caesarTableWrap" style="display:none">
-        <summary>Show full Caesar shift table</summary>
-        <div class="out" id="caesarTable"></div>
-      </details>
-    </div>
-  </div>
+<div class="output" id="decodedOutput">Decoded message will appear here.</div>
+
+<div class="sectionTitle">Caesar Shift Table (0–25)</div>
+<div class="output" id="shiftTable"></div>
 
 <script>
-  // --- Helpers ---
-  const A = 'A'.charCodeAt(0);
-  const Z = 'Z'.charCodeAt(0);
-  const alphaOnly = s => s.toUpperCase().replace(/[^A-Z]/g,'');
-  const normalize = s => s.toUpperCase();
+const A = 'A'.charCodeAt(0);
 
-  function shiftChar(c, k){ // decode with shift k (right shift means A->(A-k))
-    const code = c.charCodeAt(0);
-    if(code < A || code > Z) return c;
-    const pos = code - A;
-    return String.fromCharCode(A + (pos - k + 26) % 26);
-  }
-
-  function decodeCaesar(text, k){
-    text = normalize(text);
-    return text.replace(/[A-Z]/g, ch => shiftChar(ch, k));
-  }
-
-  // Atbash: A↔Z, B↔Y, ...
-  function decodeAtbash(text){
-    text = normalize(text);
-    return text.replace(/[A-Z]/g, ch => {
-      const code = ch.charCodeAt(0) - A;
-      return String.fromCharCode(A + (25 - code));
-    });
-  }
-
-  // Simple English-likeness score: common words + vowel ratio
-  const COMMON = ["THE","AND","TO","OF","IN","IS","YOU","THAT","IT","HELLO","THIS","FOR","ON","WITH","AS","ARE"];
-  function scoreEnglish(s){
-    const t = alphaOnly(s);
-    if(!t.length) return 0;
-    let score = 0;
-    const upper = s.toUpperCase();
-    COMMON.forEach(w => { if(upper.includes(w)) score += w.length; });
-    const vowels = (upper.match(/[AEIOU]/g)||[]).length;
-    const vRatio = vowels / Math.max(1, t.length);
-    // reward reasonable vowel ratio
-    score += Math.max(0, 10 - Math.abs(vRatio - 0.38)*50); // peak ~0.38
-    // prefer having spaces/punctuation -> more natural language
-    score += (s.match(/[\s,.!?]/g)||[]).length * 0.5;
-    return score;
-  }
-
-  function bestCaesar(text){
-    let bestK = 0, bestText = text, bestScore = -Infinity;
-    for(let k=0;k<26;k++){
-      const d = decodeCaesar(text, k);
-      const sc = scoreEnglish(d);
-      if(sc > bestScore){ bestScore = sc; bestK = k; bestText = d; }
-    }
-    return {k:bestK, text:bestText, score:bestScore};
-  }
-
-  function detectAndDecode(input){
-    // try both families
-    const ca = bestCaesar(input);
-    const atText = decodeAtbash(input);
-    const atScore = scoreEnglish(atText);
-
-    // choose higher score (tie -> prefer Caesar shift 0/… if identical)
-    if(atScore > ca.score + 1){
-      return {kind:'Atbash', text:atText, k:null, caTable: buildCaesarTable(input)};
-    }else{
-      return {kind:'Caesar', text:ca.text, k:ca.k, caTable: buildCaesarTable(input)};
-    }
-  }
-
-  function buildCaesarTable(input){
-    // show all shifts for learning
-    let lines = ["--- Caesar Shift Table (input decoded with each shift) ---"];
-    for(let k=0;k<26;k++){
-      lines.push(`Shift ${k.toString().padStart(2,' ')}: ${decodeCaesar(input,k)}`);
-    }
-    return lines.join('\n');
-  }
-
-  // --- UI wiring ---
-  const $ = id => document.getElementById(id);
-  const input = $('input');
-  const meta = $('meta');
-  const output = $('output');
-  const tableWrap = $('caesarTableWrap');
-  const tableDiv = $('caesarTable');
-
-  $('btnDecode').onclick = () => {
-    const txt = input.value.trim();
-    if(!txt){ output.textContent = "Please enter some text."; meta.textContent = ""; tableWrap.style.display='none'; return; }
-    const res = detectAndDecode(txt);
-    output.textContent = res.text || "(no letters to decode)";
-    meta.innerHTML =
-      `<span class="tag">Detected: ${res.kind}${res.kind==='Caesar' ? ` (shift ${res.k})` : ''}</span>` +
-      `<span class="tag">Input length: ${txt.length}</span>`;
-
-    // show Caesar table (useful for demo/learning)
-    tableDiv.textContent = res.caTable;
-    tableWrap.style.display = 'block';
-  };
-
-  $('btnClear').onclick = () => { input.value=''; output.textContent='Decoded message will appear here.'; meta.textContent=''; tableWrap.style.display='none'; };
-
-  $('exCaesar').onclick = () => { input.value = 'KHOOR'; $('btnDecode').click(); };
-  $('exAtbash').onclick  = () => { input.value = 'SVOOL'; $('btnDecode').click(); };
-</script>
-</body>
-</html>
+// shift single letter
+fun
