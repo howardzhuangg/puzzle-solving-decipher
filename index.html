@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Puzzle Solving Decipher</title>
+<style>
+    body { font-family: Arial, sans-serif; background:#111; color:white; padding:20px; }
+    h1 { color:#4dd0e1; }
+    textarea { width:100%; height:120px; font-size:16px; padding:10px; border-radius:8px; }
+    button { margin-top:10px; padding:10px 20px; font-size:16px; cursor:pointer; border-radius:8px; border:none; }
+    .output { background:#1a1a1a; margin-top:20px; padding:15px; border-radius:8px; white-space:pre-wrap; }
+</style>
+</head>
+
+<body>
+
+<h1>🔐 Puzzle Solving Cipher Decoder</h1>
+<p>Automatically detects and decodes <b>Caesar</b> or <b>Atbash</b> cipher.</p>
+
+<textarea id="inputText" placeholder="Enter encoded text here..."></textarea>
+<button onclick="decodeMessage()">Decode</button>
+
+<div class="output" id="result"></div>
+
+<script>
+// Atbash Cipher decode
+function atbashDecode(str) {
+    const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const reversed = "ZYXWVUTSRQPONMLKJIHGFEDCBA";
+    return str.toUpperCase().split("").map(ch => {
+        let i = alphabet.indexOf(ch);
+        return i >= 0 ? reversed[i] : ch;
+    }).join("");
+}
+
+// Caesar shift by n
+function caesarShift(str, n) {
+    return str.toUpperCase().replace(/[A-Z]/g, c =>
+        String.fromCharCode((c.charCodeAt(0) - 65 + n + 26) % 26 + 65)
+    );
+}
+
+// Score text based on common English words
+function scoreText(text) {
+    const commonWords = ["THE","AND","TO","OF","BE","IN","THAT","IT","IS","YOU","ARE"];
+    return commonWords.filter(w => text.includes(w)).length;
+}
+
+// Detect best Caesar shift
+function bestCaesarDecode(str) {
+    let bestScore = -1, bestResult = "", bestShift = 0;
+    for (let s = 0; s < 26; s++) {
+        let decoded = caesarShift(str, -s);
+        let score = scoreText(decoded);
+        if (score > bestScore) {
+            bestScore = score;
+            bestResult = decoded;
+            bestShift = s;
+        }
+    }
+    return { shift: bestShift, text: bestResult };
+}
+
+function decodeMessage() {
+    let input = document.getElementById("inputText").value.toUpperCase();
+
+    let atbash = atbashDecode(input);
+    let caesar = bestCaesarDecode(input);
+
+    let scoreA = scoreText(atbash);
+    let scoreC = scoreText(caesar.text);
+
+    let result = "";
+    if (scoreA > scoreC) {
+        result += "Detected Cipher: ✅ Atbash\n\n";
+        result += "Decoded Message:\n" + atbash;
+    } else {
+        result += "Detected Cipher: ✅ Caesar Cipher\n";
+        result += "Shift used: " + caesar.shift + "\n\n";
+        result += "Decoded Message:\n" + caesar.text;
+    }
+
+    // Also show all Caesar shifts for demonstration
+    result += "\n\n--- Caesar Shift Table ---\n";
+    for (let s = 0; s < 26; s++) {
+        result += "Shift " + s + ": " + caesarShift(input, -s) + "\n";
+    }
+
+    document.getElementById("result").textContent = result;
+}
+</script>
+
+</body>
+</html>
