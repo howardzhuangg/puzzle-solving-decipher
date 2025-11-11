@@ -4,18 +4,18 @@
 <meta charset="UTF-8">
 <title>Simple Cipher Decoder</title>
 <style>
-  body { font-family: Arial, sans-serif; background:#f7f7f7; padding:40px; color:#222; }
-  h1 { color:#003366; }
-  textarea { width:100%; height:120px; padding:10px; font-size:16px; border-radius:6px; border:1px solid #aaa; }
-  button { margin-top:10px; padding:10px 18px; font-size:16px; border-radius:6px; cursor:pointer; background:#003366; color:white; border:none; }
-  .box { background:white; padding:15px; border-radius:6px; border:1px solid #ddd; margin-top:20px; }
+  body { font-family: Arial, sans-serif; background:#111; color:white; padding:40px; }
+  h1 { color:#4dd0e1; }
+  textarea { width:100%; height:120px; padding:10px; font-size:16px; border-radius:6px; border:1px solid #444; background:#222; color:white; }
+  button { margin-top:12px; padding:10px 18px; font-size:16px; border-radius:6px; cursor:pointer; background:#4dd0e1; color:black; border:none; }
+  .box { background:#1a1a1a; padding:15px; border-radius:6px; border:1px solid #333; margin-top:20px; white-space:pre-wrap; }
 </style>
 </head>
 
 <body>
 
-<h1>Simple Cipher Decoder</h1>
-<p>Enter a message encoded using Caesar or Atbash cipher.</p>
+<h1>🔐 Simple Cipher Decoder</h1>
+<p>Decodes **Caesar (shift 3)** and **Atbash** side-by-side.</p>
 
 <textarea id="inputText" placeholder="Enter encoded text..."></textarea>
 <br>
@@ -27,14 +27,14 @@
 // Atbash cipher decode
 function atbash(text) {
   const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  const reverse =  "ZYXWVUTSRQPONMLKJIHGFEDCBA";
+  const reverse  = "ZYXWVUTSRQPONMLKJIHGFEDCBA";
   return text.toUpperCase().split("").map(c => {
     let i = alphabet.indexOf(c);
     return i >= 0 ? reverse[i] : c;
   }).join("");
 }
 
-// Caesar cipher decode (assume shift of 3 for simplicity)
+// Caesar cipher decode (fixed shift 3)
 function caesar(text) {
   return text.toUpperCase().replace(/[A-Z]/g, c =>
     String.fromCharCode((c.charCodeAt(0) - 65 - 3 + 26) % 26 + 65)
@@ -43,14 +43,12 @@ function caesar(text) {
 
 function decode() {
   let input = document.getElementById("inputText").value.toUpperCase();
-
   let caesarResult = caesar(input);
   let atbashResult = atbash(input);
 
-  // Display both clearly
   document.getElementById("output").innerHTML =
-    "<b>Caesar (shift 3) result:</b><br>" + caesarResult + "<br><br>" +
-    "<b>Atbash result:</b><br>" + atbashResult;
+      "Caesar (Shift -3):\n" + caesarResult +
+      "\n\nAtbash:\n" + atbashResult;
 }
 </script>
 
