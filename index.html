@@ -35,4 +35,82 @@
 const A = 'A'.charCodeAt(0);
 
 // shift single letter
-fun
+function shift(letter, n){
+  let code = letter.charCodeAt(0) - A;
+  return String.fromCharCode(A + (code - n + 26) % 26);
+}
+
+// decode with shift n
+function caesarDecode(text, n){
+  return text.toUpperCase().replace(/[A-Z]/g, c => shift(c, n));
+}
+
+// atbash decode
+function atbashDecode(text){
+  return text.toUpperCase().replace(/[A-Z]/g, c =>
+    String.fromCharCode(A + (25 - (c.charCodeAt(0) - A)))
+  );
+}
+
+// score how English-like text is
+function englishScore(s){
+  const commonWords = ["THE","AND","TO","OF","IN","IS","YOU","HELLO"];
+  let score = 0;
+  const upper = s.toUpperCase();
+  commonWords.forEach(w => { if(upper.includes(w)) score += 5; });
+  return score;
+}
+
+// detect best Caesar shift
+function bestCaesar(input){
+  let best = {shift: 0, text: input, score: -1};
+  for(let s=0; s<26; s++){
+    let decoded = caesarDecode(input, s);
+    let score = englishScore(decoded);
+    if(score > best.score){
+      best = {shift: s, text: decoded, score};
+    }
+  }
+  return best;
+}
+
+function decode(){
+  const input = document.getElementById("inputText").value.toUpperCase();
+  if(!input){ document.getElementById("decodedOutput").textContent = "Enter text."; return; }
+
+  const caesar = bestCaesar(input);
+  const atbash = atbashDecode(input);
+
+  // choose better result
+  const chosen = englishScore(atbash) > caesar.score ? 
+    {method:"Atbash", text:atbash} : 
+    {method:`Caesar (Shift ${caesar.shift})`, text:caesar.text};
+
+  document.getElementById("decodedOutput").textContent =
+    `Detected: ${chosen.method}\nResult: ${chosen.text}`;
+
+  buildShiftTable(input);
+}
+
+// show full shift table with alphabet visualization
+function buildShiftTable(input){
+  let table = "";
+  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+  for(let s=0; s<26; s++){
+    let shiftedAlphabet = alphabet.split("").map(c=>shift(c,s)).join("");
+    let decoded = caesarDecode(input, s);
+    table += `Shift ${s}:\nAlphabet:  ${alphabet}\n→ Shifted:  ${shiftedAlphabet}\n→ Decoded:  ${decoded}\n\n`;
+  }
+
+  document.getElementById("shiftTable").textContent = table;
+}
+
+function setExample(text){
+  document.getElementById("inputText").value = text;
+  decode();
+}
+</script>
+
+</body>
+</html>
